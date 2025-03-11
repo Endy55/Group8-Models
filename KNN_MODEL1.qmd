@@ -1,0 +1,229 @@
+---
+title: $K$NN WINE DATA MODEL 1
+author: "Endy Zarate, Ted Yanez, Ghson Alotibi, Cameron Hayman (Group 8)"
+date: "02/10/2025"
+
+format: 
+  html:  
+    theme: superhero  
+    mainfont: monospace
+    highlight-style: github
+    title-block-banner: true
+    embed-resources: true
+
+---
+
+# 1. Setup
+
+```{r}
+sh <- suppressPackageStartupMessages
+sh(library(tidyverse))
+sh(library(caret))
+sh(library(tidytext))
+sh(library(SnowballC))
+sh(library(class))
+sh(library(fastDummies))
+sh(library(rpart)) # New?
+sh(library(randomForest)) # New?
+data(stop_words)
+```
+
+# 2. Dataframe $K$NN Model
+
+- We use the wine dataframe
+
+```{r}
+wine = readRDS(gzcon(url("https://cd-public.github.io/D505/dat/pinot.rds")))
+```
+
+# 3. Engineer Features
+
+```{r}
+wine = wine %>%
+  mutate(factor_year = as.factor(year),
+         description = tolower(description))
+
+wine = wine %>%
+  mutate(cherry = str_detect(description, "cherry"),
+         tannins = str_detect(description, "tannins"),
+         fruit = str_detect(description, "fruit"),
+         palate = str_detect(description, "tannins"),
+         aromas = str_detect(description, "aromas"),
+         noir = str_detect(description, "noir"),
+         flavors = str_detect(description, "flavors"),
+         black = str_detect(description, "black"),
+         finish = str_detect(description, "finish"),
+         drink = str_detect(description, "drink"),
+         acidity = str_detect(description, "acidity"),
+         red = str_detect(description, "red"),
+         notes = str_detect(description, "notes"),
+         plum = str_detect(description, "plum"),
+         raspberry = str_detect(description, "raspberry"),
+         berry = str_detect(description, "berry"),
+         nose = str_detect(description, "nose"),
+         ripe = str_detect(description, "ripe"),
+         structure = str_detect(description, "structure"),
+         light = str_detect(description, "light"),
+         tart = str_detect(description, "tart"),
+         vineyard = str_detect(description, "vineyard"),
+         chocolate = str_detect(description, "chocolate"),
+         firm = str_detect(description, "firm"),
+         rich = str_detect(description, "rich")
+         ) %>%
+  select(-description)
+
+wine = wine %>%
+  mutate(lprice = log(price),
+         lpoints = log(points),
+         pricepts = (price * points),
+         logs = (lprice * lpoints),
+         pointcherry = (cherry * points),
+         pointtannins = (tannins * points),
+         pointfruit = (fruit * points),
+         pointpalate = (palate * points),
+         pointaromas = (aromas * points),
+         pointnoir = (noir * points),
+         pointflavors = (flavors * points),
+         pointblack = (black * points),
+         pointfinish = (finish * points),
+         pointdrink = (drink * points),
+         pointacidity = (acidity * points),
+         pointred = (red * points),
+         pointnotes = (notes * points),
+         pointplum = (plum * points),
+         pointraspberry = (raspberry * points),
+         pointberry = (berry * points),
+         pointnose = (nose * points),
+         pointripe = (ripe * points),
+         pointstructure = (structure * points),
+         pointlight = (light * points),
+         pointtart = (tart * points),
+         pointvineyard = (vineyard * points),
+         pointchocolate = (chocolate * points),
+         pointfirm = (firm * points),
+         pointrich = (rich * points),
+         timecherry = (cherry * year),
+         timetannins = (tannins * year),
+         timefruit = (fruit * year),
+         timepalate = (palate * year),
+         timearomas = (aromas * year),
+         timenoir = (noir * year),
+         timeflavors = (flavors * year),
+         timeblack = (black * year),
+         timefinish = (finish * year),
+         timedrink = (drink * year),
+         timeacidity = (acidity * year),
+         timered = (red * year),
+         timenotes = (notes * year),
+         timeplum = (plum * year),
+         timeraspberry = (raspberry * year),
+         timeberry = (berry * year),
+         timenose = (nose * year),
+         timeripe = (ripe * year),
+         timestructure = (structure * year),
+         timelight = (light * year),
+         timetart = (tart * year),
+         timevineyard = (vineyard * year),
+         timechocolate = (chocolate * year),
+         timefirm = (firm * year),
+         timerich = (rich * year),
+         pricecherry = (cherry * price),
+         pricetannins = (tannins * price),
+         pricefruit = (fruit * price),
+         pricepalate = (palate * price),
+         pricearomas = (aromas * price),
+         pricenoir = (noir * price),
+         priceflavors = (flavors * price),
+         priceblack = (black * price),
+         pricefinish = (finish * price),
+         pricedrink = (drink * price),
+         priceacidity = (acidity * price),
+         pricered = (red * price),
+         pricenotes = (notes * price),
+         priceplum = (plum * price),
+         priceraspberry = (raspberry * price),
+         priceberry = (berry * price),
+         pricenose = (nose * price),
+         priceripe = (ripe * price),
+         pricestructure = (structure * price),
+         pricelight = (light * price),
+         pricetart = (tart * price),
+         pricevineyard = (vineyard * price),
+         pricechocolate = (chocolate * price),
+         pricefirm = (firm * price),
+         pricerich = (rich * price),
+         lpricecherry = (cherry * lprice),
+         lpricetannins = (tannins * lprice),
+         lpricefruit = (fruit * lprice),
+         lpricepalate = (palate * lprice),
+         lpricearomas = (aromas * lprice),
+         lpricenoir = (noir * lprice),
+         lpriceflavors = (flavors * lprice),
+         lpriceblack = (black * lprice),
+         lpricefinish = (finish * lprice),
+         lpricedrink = (drink * lprice),
+         lpriceacidity = (acidity * lprice),
+         lpricered = (red * lprice),
+         lpricenotes = (notes * lprice),
+         lpriceplum = (plum * lprice),
+         lpriceraspberry = (raspberry * lprice),
+         lpriceberry = (berry * lprice),
+         lpricenose = (nose * lprice),
+         lpriceripe = (ripe * lprice),
+         lpricestructure = (structure * lprice),
+         lpricelight = (light * lprice),
+         lpricetart = (tart * lprice),
+         lpricevineyard = (vineyard * lprice),
+         lpricechocolate = (chocolate * lprice),
+         lpricefirm = (firm * lprice),
+         lpricerich = (rich * lprice),
+         )
+
+wine = wine %>% 
+  dummy_cols(
+    select_columns = "factor_year",
+    remove_most_frequent_dummy = T, 
+    remove_selected_columns = T)
+```
+
+
+# 4. Save the dataframe
+
+```{r}
+write_rds(wine, file="group_8_knn.rds")
+```
+
+
+# 5. Assessment
+
+```{r}
+set.seed(505)
+wine_index = createDataPartition(wine$province, p = 0.8, list = FALSE)
+train = wine[ wine_index, ]
+test = wine[-wine_index, ]
+
+fit <- train(province ~ .,
+             data = train,              
+             method = "knn",
+             tuneLength = 15,
+             metric = "Kappa",
+             trControl = trainControl(method = "cv", number = 5))
+fit
+```
+
+# FAQ
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
