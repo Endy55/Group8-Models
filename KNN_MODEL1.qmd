@@ -202,13 +202,14 @@ wine_index = createDataPartition(wine$province, p = 0.8, list = FALSE)
 train = wine[ wine_index, ]
 test = wine[-wine_index, ]
 
-fit <- train(province ~ .,
+fit = train(province ~ .,
              data = train,              
              method = "knn",
              tuneLength = 15,
              metric = "Kappa",
              trControl = trainControl(method = "cv", number = 5))
-fit
+
+confusionMatrix(predict(fit, test),factor(test$province))$overall['Kappa']
 ```
 
 # FAQ
