@@ -1,0 +1,127 @@
+---
+title: $K$NN CHURN DATA MODEL 2
+author: "Endy Zarate, Ted Yanez, Ghson Alotibi, Cameron Hayman (Group 8)"
+date: "02/10/2025"
+
+format: 
+  html:  
+    theme: superhero  
+    mainfont: monospace
+    highlight-style: github
+    title-block-banner: true
+    embed-resources: true
+
+---
+
+# 1. Setup
+
+```{r}
+sh <- suppressPackageStartupMessages
+sh(library(tidyverse))
+sh(library(caret))
+sh(library(tidytext))
+sh(library(SnowballC))
+sh(library(class))
+sh(library(fastDummies))
+sh(library(rpart)) 
+sh(library(randomForest)) 
+data(stop_words)
+```
+
+# 2. Dataframe $K$NN Model
+
+- We use the wine dataframe
+
+```{r}
+bank = readRDS(gzcon(url("https://cd-public.github.io/D505/dat/BankChurners.rds")))
+```
+
+# 3. Engineer Features
+
+```{r}
+bank = bank %>%
+  mutate(avg_trans = Total_Trans_Amt/Total_Trans_Ct,
+         logcount = log(Total_Trans_Ct),
+         married = ifelse(Marital_Status == "Married", 1, 0),
+         household = 1 + Dependent_count + married,
+         #Churn = as.factor(Churn),
+         inactivity = Months_Inactive_12_mon * Months_on_book,
+         logavgopentobuy = log(Avg_Open_To_Buy),
+         customer_revenue = (0.2 * Total_Revolving_Bal) + (0.25 * Total_Trans_Ct) - (15 * Contacts_Count_12_mon)) %>%
+  select(inactivity,logavgopentobuy,customer_revenue,avg_trans,logcount,Churn) %>%
+  relocate(Churn, .after = last_col()) %>%
+  na.omit()
+
+```
+
+```{r}
+bank = bank %>%
+  select(-c(1:19))
+```
+
+```{r}
+bank = bank %>%
+  relocate(Churn, .after = last_col())
+```
+
+
+```{r}
+bank %>%
+  mutate(married = ifelse(Marital_Status == "Married", 1, 0),
+         household = 1 + Dependent_count + married,)
+```
+
+
+# 4. Save the dataframe
+
+```{r}
+write_rds(bank, file="model_2.rds")
+```
+
+
+# 5. Assessment
+
+```{r}
+train(Churn ~ .,
+      data = bank |> select(1,2,3,4,5,grep("Churn", colnames(bank))), 
+      trControl = trainControl(method = "cv", number = 5),
+      method = "glm",
+      family = "binomial",
+      maxit = 5)$results['Kappa']
+```
+
+# FAQ
+
+```{r}
+train(Churn ~ .,
+      data = bank, 
+      trControl = trainControl(method = "cv", number = 5),
+      method = "glm",
+      family = "binomial",
+      maxit = 5)$results['Kappa']
+```
+
+
+
+
+
+
+
+
+household = 1 + Dependent_count,
+customer_revenue = (0.2 * Total_Revolving_Bal) + (0.25 * Total_Trans_Ct) - (15 * Contacts_Count_12_mon),
+logmonths = log(Months_on_book),
+income_bracket = as.factor(Income_Category),
+logcredit = log(Credit_Limit)
+
+
+
+
+
+
+
+
+
+
+
+
