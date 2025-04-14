@@ -54,23 +54,6 @@ bank = bank %>%
 
 ```
 
-```{r}
-bank = bank %>%
-  select(-c(1:19))
-```
-
-```{r}
-bank = bank %>%
-  relocate(Churn, .after = last_col())
-```
-
-
-```{r}
-bank %>%
-  mutate(married = ifelse(Marital_Status == "Married", 1, 0),
-         household = 1 + Dependent_count + married,)
-```
-
 
 # 4. Save the dataframe
 
@@ -90,16 +73,6 @@ train(Churn ~ .,
       maxit = 5)$results['Kappa']
 ```
 
-# FAQ
-
-```{r}
-train(Churn ~ .,
-      data = bank, 
-      trControl = trainControl(method = "cv", number = 5),
-      method = "glm",
-      family = "binomial",
-      maxit = 5)$results['Kappa']
-```
 
 
 
@@ -108,11 +81,8 @@ train(Churn ~ .,
 
 
 
-household = 1 + Dependent_count,
-customer_revenue = (0.2 * Total_Revolving_Bal) + (0.25 * Total_Trans_Ct) - (15 * Contacts_Count_12_mon),
-logmonths = log(Months_on_book),
-income_bracket = as.factor(Income_Category),
-logcredit = log(Credit_Limit)
+
+
 
 
 
