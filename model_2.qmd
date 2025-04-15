@@ -42,9 +42,6 @@ bank = readRDS(gzcon(url("https://cd-public.github.io/D505/dat/BankChurners.rds"
 bank = bank %>%
   mutate(avg_trans = Total_Trans_Amt/Total_Trans_Ct,
          logcount = log(Total_Trans_Ct),
-         married = ifelse(Marital_Status == "Married", 1, 0),
-         household = 1 + Dependent_count + married,
-         #Churn = as.factor(Churn),
          inactivity = Months_Inactive_12_mon * Months_on_book,
          logavgopentobuy = log(Avg_Open_To_Buy),
          customer_revenue = (0.2 * Total_Revolving_Bal) + (0.25 * Total_Trans_Ct) - (15 * Contacts_Count_12_mon)) %>%
