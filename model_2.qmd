@@ -41,11 +41,11 @@ bank = readRDS(gzcon(url("https://cd-public.github.io/D505/dat/BankChurners.rds"
 ```{r}
 bank = bank %>%
   mutate(avg_trans = Total_Trans_Amt/Total_Trans_Ct,
-         logcount = log(Total_Trans_Ct),
+         logtransactions = log(Total_Trans_Ct),
          inactivity = Months_Inactive_12_mon * Months_on_book,
-         logavgopentobuy = log(Avg_Open_To_Buy),
+         RelPerMonth = Total_Relationship_Count / Months_on_book,
          customer_revenue = (0.2 * Total_Revolving_Bal) + (0.25 * Total_Trans_Ct) - (15 * Contacts_Count_12_mon)) %>%
-  select(inactivity,logavgopentobuy,customer_revenue,avg_trans,logcount,Churn) %>%
+  select(inactivity,RelPerMonth,customer_revenue,avg_trans,logtransactions,Churn) %>%
   relocate(Churn, .after = last_col()) %>%
   na.omit()
 
